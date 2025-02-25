@@ -33,16 +33,6 @@ fun returnState(initial: int, action)
     fun set(x) s := x
     return(x) s
 
-effect emit<s>
-  fun emit(item : s): ()
-
-pub fun collect-exceptions( action ) {
-  var ls : list<exception> := []
-  handle(action)
-    fun emit(item)
-      ls := ls ++ [item]
-    return(x) (x, ls)
-}
 
 pub fun collect-anything( action ) {
   var ls := []
@@ -64,6 +54,17 @@ pub fun try-emit-variant( action ) {
   }
 }
 
+effect emit<s>
+  fun emit(item : s): ()
+
+pub fun collect-exceptions( action ) {
+  var ls : list<exception> := []
+  handle(action)
+    fun emit(item)
+      ls := ls ++ [item]
+    return(x) (x, ls)
+}
+
 pub fun map-or-emit( list: list<a>, mapfn: a -> <exn> b ): <emit<exception>> list<b> {
   list.filter-map fn(item)
     match try(fn() mapfn(item))
@@ -77,25 +78,6 @@ pub fun parse-list( lines: list<string> ) {
     ParseOk(result, _) -> result
     ParseError(msg, rest) -> exn/throw("Couldn't parse '" ++ msg ++ "' from '" ++ line ++ "' with '" ++ rest.show() ++ "' remaining")
   }
-}
-
-pub fun quick_sort( list: list<int>, len: int ) : <exn|e> list<int> {
-  var min := list.minimum(0)
-  var max := list.maximum(0)
-  if min == max then return list;
-  var pivot := (min + max) / 2;
-  if pivot == min then pivot := max
-
-  var split := list.partition fn(item) item < pivot;
-
-  var lenL := split.fst.length();
-  var lenR := split.snd.length();
-  assert(lenL < len, "left len must decrease")
-  assert(lenR < len, "right len must decrease")
-
-  quick_sort(split.fst, pretend-decreasing(lenL)) 
-    ++
-  quick_sort(split.snd, pretend-decreasing(lenR))
 }
 
 pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
@@ -119,6 +101,26 @@ pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
     set(rezipped)
     ()
 }
+
+pub fun quick_sort( list: list<int>, len: int ) : <exn|e> list<int> {
+  var min := list.minimum(0)
+  var max := list.maximum(0)
+  if min == max then return list;
+  var pivot := (min + max) / 2;
+  if pivot == min then pivot := max
+
+  var split := list.partition fn(item) item < pivot;
+
+  var lenL := split.fst.length();
+  var lenR := split.snd.length();
+  assert(lenL < len, "left len must decrease")
+  assert(lenR < len, "right len must decrease")
+
+  quick_sort(split.fst, pretend-decreasing(lenL)) 
+    ++
+  quick_sort(split.snd, pretend-decreasing(lenR))
+}
+
 
 pub fun run_problem( filename: string ) : <exn,fsys,console> int {
   var content := read-text-file(("day/1/" ++ filename).path).lines;
