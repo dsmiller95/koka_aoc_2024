@@ -31,19 +31,75 @@ pub fun parse-two-numbers(): parse tuple<int,int> {
   Tuple(firstNum, secondNum)
 }
 
-pub fun solve_problem( lines: list<string> ): console int {
-  var split-lines := lines.map fn(line)
-    parse(line.slice, parse-two-numbers)
-  
-  split-lines.foreach fn(item)
-    match item  {
-      ParseOk(result, _) -> result.show/println()
-      ParseError(msg, _) -> msg.println()
-    }
+
+effect emit<s>
+  fun emit(item : s): ()
+
+pub fun collect-emits( action ) {
+  var emits_agg := []
+  handle(action)
+    fun emit(item) emits_agg := emits_agg ++ [item]
+    return(x) (x, emits_agg)
+}
+
+pub fun try-emit( action ) {
+  with final ctl throw-exn(exn) emit(exn)
+  action()
+}
+pub fun try-emit-variant( action ) {
+  try {
+    action()
+  } fn(e) {
+    emit(e)
+  }
+}
+
+pub fun emits-test()
+  with collect-emits
+  emit("hello")
+  emit("world")
+  emit("!")
+  ()
+pub fun emits-test-two()
+  with collect-emits
+  try-emit-variant
+    throw("error")
+    emit(Exception("error unreachable", ExnError))
+  try-emit-variant
+    throw("error2")
+  ()
+
+pub fun map-or-emit( list: list<a>, mapfn: a -> <exn> b ): <emit<exception>> list<b> {
+  list.filter-map fn(item)
+    match try(fn() mapfn(item))
+      Ok(x) -> Just(x)
+      Error(err) -> { emit(err); Nothing }
+}
+
+pub fun parse-list( lines: list<string> ) {
+  with collect-emits
+  with line <- lines.map-or-emit
+  match parse(line.slice, parse-two-numbers) {
+    ParseOk(result, _) -> result
+    ParseError(msg, rest) -> exn/throw("Couldn't parse '" ++ msg ++ "' from '" ++ line ++ "' with '" ++ rest.show() ++ "' remaining")
+  }
+}
+
+pub fun output( (res,errs) : (list<a>, list<b>), ?a/show : a -> string, ?b/show : b -> string )
+  println("Successes:")
+  res.foreach fn(item)
+    item.println()
+  println("Errors:")
+  errs.foreach fn(item)
+    item.println()
+
+pub fun solve_problem( lines: list<string> ): <console,div> int {
+  var res := parse-list(lines);
+  output(res)
   0
 }
 
-pub fun run_problem( filename: string ) : <exn,fsys,console> int {
+pub fun run_problem( filename: string ) : <exn,fsys,console,div> int {
   var content := read-text-file(("day/1/" ++ filename).path).lines;
   solve_problem(content)
 }
@@ -61,6 +117,10 @@ pub fun assert-eq<a>( actual: a, expected: a, ?(==) : (a,a) -> bool, ?show: a ->
 }
 
 pub fun main(){
+  println( "emits-test" )
+  println( emits-test() )
+  println( "emits-test-two" )
+  println( emits-test-two() )
   println( "day 1" )
   run_problem("example_11").assert-eq(11)
 }
