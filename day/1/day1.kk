@@ -77,7 +77,6 @@ pub fun map-or-emit( list: list<a>, mapfn: a -> <exn> b ): <emit<exception>> lis
 }
 
 pub fun parse-list( lines: list<string> ) {
-  with collect-emits
   with line <- lines.map-or-emit
   match parse(line.slice, parse-two-numbers) {
     ParseOk(result, _) -> result
@@ -85,23 +84,23 @@ pub fun parse-list( lines: list<string> ) {
   }
 }
 
-pub fun output( (res,errs) : (list<a>, list<b>), ?a/show : a -> string, ?b/show : b -> string )
-  println("Successes:")
+pub fun solve_problem( lines: list<string> ): <console,div> (int, list<exception>) {
+  with collect-emits
+  var res := parse-list(lines);
+  println("Parsed lines:")
   res.foreach fn(item)
     item.println()
-  println("Errors:")
-  errs.foreach fn(item)
-    item.println()
-
-pub fun solve_problem( lines: list<string> ): <console,div> int {
-  var res := parse-list(lines);
-  output(res)
   0
 }
 
 pub fun run_problem( filename: string ) : <exn,fsys,console,div> int {
   var content := read-text-file(("day/1/" ++ filename).path).lines;
-  solve_problem(content)
+  var res := solve_problem(content)
+  
+  println("Errors:")
+  res.snd.list/foreach fn(item)
+    item.println()
+  res.fst
 }
 
 pub fun assert( is-true: bool, message: string ) {
