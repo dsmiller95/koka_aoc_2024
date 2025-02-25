@@ -4,17 +4,6 @@ import std/os/path
 import std/os/file
 import std/text/parse
 
-value struct tuple<a,b>
-  a: a
-  b: b
-
-// fun tuple/show(tuple: tuple<a,b>, ?showA: a -> string, ?showB: b -> string): string {
-//   "(" ++ showA(tuple.a) ++ ", " ++ showB(tuple.b) ++ ")"
-// }
-fun tuple/show(t: tuple<int,int>): string {
-  "(" ++ t.a.show() ++ ", " ++ t.b.show() ++ ")"
-}
-
 pub fun parse-number() {
   val digits = parse/digits();
   var number := digits.parse-int();
@@ -24,11 +13,11 @@ pub fun parse-number() {
   }
 }
 
-pub fun parse-two-numbers(): parse tuple<int,int> {
+pub fun parse-two-numbers(): parse (int,int) {
   val firstNum = parse-number();
   many1(white);
   val secondNum = parse-number();
-  Tuple(firstNum, secondNum)
+  (firstNum, secondNum)
 }
 
 
