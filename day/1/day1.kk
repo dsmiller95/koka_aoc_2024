@@ -184,4 +184,6 @@ pub fun main(): <pure,console,fsys> () {
 
   println( "day 1" )
   run_problem("example_11").assert-eq(11)
+
+  println("real result: " ++ run_problem("input").show())
 }
