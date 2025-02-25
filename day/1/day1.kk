@@ -1,5 +1,6 @@
 module day1
 
+import std/core/undiv
 import std/os/path
 import std/os/file
 import std/text/parse
@@ -81,12 +82,51 @@ pub fun parse-list( lines: list<string> ) {
   }
 }
 
+pub fun quick_sort( list: list<int>, len ) : exn list<int> {
+  if len <= 1 then 
+    return list;
+
+  var min := list.minimum(0)
+  var max := list.maximum(0)
+  if min == max then
+    return list;
+
+  var pivot := (min + max) / 2;
+  if pivot == min then {
+    pivot := max;
+  }
+
+  var subSorted := list.partition fn(item) item < pivot;
+
+  var left := subSorted.fst;
+  var right := subSorted.snd;
+  assert(left.length() < len, "left len must decrease")
+  assert(right.length() < len, "right len must decrease")
+
+  quick_sort(left, pretend-decreasing(left.length())) ++ quick_sort(right, pretend-decreasing(right.length()))
+}
+
+pub fun test_sort() {
+  println("quick_sort started")
+  var list := [3, 4, 1, 2, 5];
+  var sorted := quick_sort(list, list.length());
+  assert(sorted == [1, 2, 3, 4, 5], "quick_sort failed")
+  list := [-2, 3, 54, 0, 0, 2, 2, 0, 1];
+  sorted := quick_sort(list, list.length());
+  assert(sorted == [-2, 0, 0, 0, 1, 2, 2, 3, 54], "quick_sort failed")
+  println("quick_sort passed")
+}
+
 pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
   with collect-exceptions
-  var res := parse-list(lines);
+  var parsed_lines := parse-list(lines);
   println("Parsed lines:")
-  res.foreach fn(item)
+  parsed_lines.foreach fn(item)
     item.println()
+
+  var unzipped := parsed_lines.unzip();
+  var x := unzipped.fst;
+  var y := unzipped.snd;
   0
 }
 
@@ -113,10 +153,14 @@ pub fun assert-eq<a>( actual: a, expected: a, ?(==) : (a,a) -> bool, ?show: a ->
 }
 
 pub fun main(): <pure,console,fsys> () {
+  println( "test sort" )
+  println( test_sort() )
+
   println( "emits-test" )
   println( emits-test() )
   println( "emits-test-two" )
   println( emits-test-two() )
+
   println( "day 1" )
   run_problem("example_11").assert-eq(11)
 }
