@@ -64,21 +64,6 @@ pub fun try-emit-variant( action ) {
   }
 }
 
-pub fun emits-test()
-  with collect-anything
-  emit("hello")
-  emit("world")
-  emit("!")
-  ()
-pub fun emits-test-two()
-  with collect-anything
-  try-emit-variant
-    throw("error")
-    emit(Exception("error unreachable", ExnError))
-  try-emit-variant
-    throw("error2")
-  ()
-
 pub fun map-or-emit( list: list<a>, mapfn: a -> <exn> b ): <emit<exception>> list<b> {
   list.filter-map fn(item)
     match try(fn() mapfn(item))
@@ -95,38 +80,22 @@ pub fun parse-list( lines: list<string> ) {
 }
 
 pub fun quick_sort( list: list<int>, len: int ) : <exn|e> list<int> {
-  if len <= 1 then 
-    return list;
-
   var min := list.minimum(0)
   var max := list.maximum(0)
-  if min == max then
-    return list;
-
+  if min == max then return list;
   var pivot := (min + max) / 2;
-  if pivot == min then {
-    pivot := max;
-  }
+  if pivot == min then pivot := max
 
-  var subSorted := list.partition fn(item) item < pivot;
+  var split := list.partition fn(item) item < pivot;
 
-  var left := subSorted.fst;
-  var right := subSorted.snd;
-  assert(left.length() < len, "left len must decrease")
-  assert(right.length() < len, "right len must decrease")
+  var lenL := split.fst.length();
+  var lenR := split.snd.length();
+  assert(lenL < len, "left len must decrease")
+  assert(lenR < len, "right len must decrease")
 
-  quick_sort(left, pretend-decreasing(left.length())) ++ quick_sort(right, pretend-decreasing(right.length()))
-}
-
-pub fun test_sort() {
-  println("quick_sort started")
-  var list := [3, 4, 1, 2, 5];
-  var sorted := quick_sort(list, list.length());
-  assert(sorted == [1, 2, 3, 4, 5], "quick_sort failed")
-  list := [-2, 3, 54, 0, 0, 2, 2, 0, 1];
-  sorted := quick_sort(list, list.length());
-  assert(sorted == [-2, 0, 0, 0, 1, 2, 2, 3, 54], "quick_sort failed")
-  println("quick_sort passed")
+  quick_sort(split.fst, pretend-decreasing(lenL)) 
+    ++
+  quick_sort(split.snd, pretend-decreasing(lenR))
 }
 
 pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
@@ -171,6 +140,33 @@ pub fun assert-eq<a>( actual: a, expected: a, ?(==) : (a,a) -> bool, ?show: a ->
   if !(actual == expected) then {
     throw("(expected: " ++ show(expected) ++ ", actual: " ++ show(actual) ++ ")")
   }
+}
+
+pub fun emits-test()
+  with collect-anything
+  emit("hello")
+  emit("world")
+  emit("!")
+  ()
+pub fun emits-test-two()
+  with collect-anything
+  try-emit-variant
+    throw("error")
+    emit(Exception("error unreachable", ExnError))
+  try-emit-variant
+    throw("error2")
+  ()
+
+
+pub fun test_sort() {
+  println("quick_sort started")
+  var list := [3, 4, 1, 2, 5];
+  var sorted := quick_sort(list, list.length());
+  assert(sorted == [1, 2, 3, 4, 5], "quick_sort failed")
+  list := [-2, 3, 54, 0, 0, 2, 2, 0, 1];
+  sorted := quick_sort(list, list.length());
+  assert(sorted == [-2, 0, 0, 0, 1, 2, 2, 3, 54], "quick_sort failed")
+  println("quick_sort passed")
 }
 
 pub fun main(): <pure,console,fsys> () {
