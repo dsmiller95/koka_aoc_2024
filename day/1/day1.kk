@@ -20,15 +20,23 @@ pub fun parse-two-numbers(): parse (int,int) {
   (firstNum, secondNum)
 }
 
-
 effect emit<s>
   fun emit(item : s): ()
 
-pub fun collect-emits( action ) {
-  var emits_agg := []
+pub fun collect-exceptions( action ) {
+  var ls : list<exception> := []
   handle(action)
-    fun emit(item) emits_agg := emits_agg ++ [item]
-    return(x) (x, emits_agg)
+    fun emit(item)
+      ls := ls ++ [item]
+    return(x) (x, ls)
+}
+
+pub fun collect-anything( action ) {
+  var ls := []
+  handle(action)
+    fun emit(item)
+      ls := ls ++ [item]
+    return(x) (x, ls)
 }
 
 pub fun try-emit( action ) {
@@ -44,13 +52,13 @@ pub fun try-emit-variant( action ) {
 }
 
 pub fun emits-test()
-  with collect-emits
+  with collect-anything
   emit("hello")
   emit("world")
   emit("!")
   ()
 pub fun emits-test-two()
-  with collect-emits
+  with collect-anything
   try-emit-variant
     throw("error")
     emit(Exception("error unreachable", ExnError))
@@ -73,8 +81,8 @@ pub fun parse-list( lines: list<string> ) {
   }
 }
 
-pub fun solve_problem( lines: list<string> ): <console,div> (int, list<exception>) {
-  with collect-emits
+pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
+  with collect-exceptions
   var res := parse-list(lines);
   println("Parsed lines:")
   res.foreach fn(item)
@@ -82,7 +90,7 @@ pub fun solve_problem( lines: list<string> ): <console,div> (int, list<exception
   0
 }
 
-pub fun run_problem( filename: string ) : <exn,fsys,console,div> int {
+pub fun run_problem( filename: string ) : <exn,fsys,console> int {
   var content := read-text-file(("day/1/" ++ filename).path).lines;
   var res := solve_problem(content)
   
@@ -104,7 +112,7 @@ pub fun assert-eq<a>( actual: a, expected: a, ?(==) : (a,a) -> bool, ?show: a ->
   }
 }
 
-pub fun main(){
+pub fun main(): <pure,console,fsys> () {
   println( "emits-test" )
   println( emits-test() )
   println( "emits-test-two" )
