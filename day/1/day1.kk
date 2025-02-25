@@ -21,6 +21,18 @@ pub fun parse-two-numbers(): parse (int,int) {
   (firstNum, secondNum)
 }
 
+
+effect state<s>
+  ctl get()      : s
+  ctl set(x : s) : ()
+
+fun returnState(initial: int, action)
+  var s := initial
+  handle(action)
+    fun get()  s
+    fun set(x) s := x
+    return(x) s
+
 effect emit<s>
   fun emit(item : s): ()
 
@@ -40,9 +52,9 @@ pub fun collect-anything( action ) {
     return(x) (x, ls)
 }
 
-pub fun try-emit( action ) {
+pub fun try-emit( action : () -> <exn|e> () ) : <emit<exception>|e> () {
   with final ctl throw-exn(exn) emit(exn)
-  action()
+  mask<emit<exception>> { action() }
 }
 pub fun try-emit-variant( action ) {
   try {
@@ -82,7 +94,7 @@ pub fun parse-list( lines: list<string> ) {
   }
 }
 
-pub fun quick_sort( list: list<int>, len ) : exn list<int> {
+pub fun quick_sort( list: list<int>, len: int ) : <exn|e> list<int> {
   if len <= 1 then 
     return list;
 
@@ -127,7 +139,16 @@ pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
   var unzipped := parsed_lines.unzip();
   var x := unzipped.fst;
   var y := unzipped.snd;
-  0
+
+  with returnState(0)
+
+  try-emit
+    var sorted_x := mask<local> { quick_sort(x, x.length()) }
+    var sorted_y := mask<local> { quick_sort(y, y.length()) }
+    var rezipped := list/zipwith(sorted_x, sorted_y, fn(a,b) abs(a - b))
+      .sum()
+    set(rezipped)
+    ()
 }
 
 pub fun run_problem( filename: string ) : <exn,fsys,console> int {
