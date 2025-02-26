@@ -40,13 +40,13 @@ fun twin-dequeue-from(left: list<int>, right: list<int>, action) {
   ()
 }
 
-effect twin-deque
+effect twin-dequeue
   fun dequeue-left() : maybe<int>
   fun peek-left() : maybe<int>
   fun dequeue-right() : maybe<int>
   fun peek-right() : maybe<int>
 
-pub fun consume-run(max-run-len: int) : <twin-deque,exn> (maybe<int>) {
+pub fun consume-run(max-run-len: int) : <twin-dequeue,exn> (maybe<int>) {
   var current-item := min(peek-left(), peek-right());
   if current-item == Nothing then return Nothing;
 
@@ -63,7 +63,7 @@ pub fun consume-run(max-run-len: int) : <twin-deque,exn> (maybe<int>) {
   Just(left-run * right-run * current-item.unwrap())
 }
 
-pub fun take-runs-then-mult(max-len: int) : <twin-deque,exn> int {
+pub fun take-runs-then-mult(max-len: int) : <twin-dequeue,exn> int {
   var result := 0;
 
   while-no-diverge(max-len) {
