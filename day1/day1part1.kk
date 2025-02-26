@@ -25,9 +25,10 @@ pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
   try-emit
     var sorted_x := mask<local> { quick_sort(x, x.length()) }
     var sorted_y := mask<local> { quick_sort(y, y.length()) }
-    var rezipped := list/zipwith(sorted_x, sorted_y, fn(a,b) abs(a - b))
+    var rezipped := list/zip(sorted_x, sorted_y);
+    var result := rezipped.map(fn((a,b)) abs(a - b))
       .sum()
-    set(rezipped)
+    set(result)
     ()
 }
 
@@ -42,8 +43,8 @@ pub fun run_problem( filename: string ) : <exn,fsys,console> int {
 }
 
 pub fun main(): <pure,console,fsys> () {
-  println( "day 1" )
-  run_problem("example_11").assert-eq(11)
+  println( "day 1 part 1" )
+  run_problem("example").assert-eq(11)
 
   println("real result: " ++ run_problem("input").show())
 }

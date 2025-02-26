@@ -6,9 +6,9 @@ pub fun assert( is-true: bool, message: string ) {
   }
 }
 
-pub fun assert-eq<a>( actual: a, expected: a, ?(==) : (a,a) -> bool, ?show: a -> string ) {
+pub fun assert-eq<a>( actual: a, expected: a, msg : string = "", ?(==) : (a,a) -> bool, ?show: a -> string ) {
   if !(actual == expected) then {
-    throw("(expected: " ++ show(expected) ++ ", actual: " ++ show(actual) ++ ")")
+    throw("(expected: " ++ show(expected) ++ ", actual: " ++ show(actual) ++ ") " ++ msg)
   }
 }
 
