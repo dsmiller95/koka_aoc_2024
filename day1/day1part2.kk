@@ -8,16 +8,10 @@ import lib/emit
 import lib/assert
 import lib/sort
 import lib/state
-import lib/no-diverge
+import lib/control
+import lib/maybe-ext
 
 import day1/day1parse
-
-
-effect twin-deque
-  fun dequeue-left() : maybe<int>
-  fun peek-left() : maybe<int>
-  fun dequeue-right() : maybe<int>
-  fun peek-right() : maybe<int>
 
 fun twin-dequeue-from(left: list<int>, right: list<int>, action) {
   var left-var := left;
@@ -46,42 +40,38 @@ fun twin-dequeue-from(left: list<int>, right: list<int>, action) {
   ()
 }
 
-fun min-maybe(a: maybe<int>, b: maybe<int>) : maybe<int> {
-  match (a, b) {
-    (Nothing, _) -> Nothing
-    (_, Nothing) -> Nothing
-    (Just(x), Just(y)) -> Just(min(x, y))
-  }
+effect twin-deque
+  fun dequeue-left() : maybe<int>
+  fun peek-left() : maybe<int>
+  fun dequeue-right() : maybe<int>
+  fun peek-right() : maybe<int>
+
+pub fun consume-run(max-run-len: int) : <twin-deque,exn> (maybe<int>) {
+  var current-item := min(peek-left(), peek-right());
+  if current-item == Nothing then return Nothing;
+
+  var left-run := 0;
+  var right-run := 0;
+  
+  while-no-diverge(max-run-len) { peek-left() == current-item }
+    left-run := left-run + 1;
+    dequeue-left();
+  while-no-diverge(max-run-len) { peek-right() == current-item }
+    right-run := right-run + 1;
+    dequeue-right();
+
+  Just(left-run * right-run * current-item.unwrap())
 }
 
-pub fun take-runs-then-mult(max-len: int) : <twin-deque,exn,console> int {
-  var current-item := min-maybe(peek-left(), peek-right());
-  var left-run := 1;
-  var right-run := 0;
+pub fun take-runs-then-mult(max-len: int) : <twin-deque,exn> int {
   var result := 0;
 
-  while-no-diverge(max-len) { current-item != Nothing } {
-    while-no-diverge(max-len) { peek-left() == current-item }
-      left-run := left-run + 1;
-      dequeue-left();
-      ()
-    while-no-diverge(max-len) { peek-right() == current-item }
-      right-run := right-run + 1;
-      dequeue-right();
-      ()
-    result := result + left-run * right-run * (match current-item {
-      Nothing -> exn/throw("unreachable")
-      Just(x) -> x
-    });
-
-    println(current-item.show() ++ " " ++ left-run.show() ++ " " ++ right-run.show() ++
-       " " ++ peek-left().show() ++ " " ++ peek-right().show() ++ " " ++ result.show())
-
-    left-run := 0;
-    right-run := 0;
-
-    current-item := min-maybe(peek-left(), peek-right())
-  }
+  while-no-diverge(max-len) {
+    match consume-run(max-len) {
+      Nothing -> False
+      Just(x) -> { result := result + x; True }
+    }
+  } { }
 
   result
 }
@@ -106,8 +96,6 @@ pub fun solve_problem( lines: list<string> ): <console> (int, list<exception>) {
     set(result)
     println("result out " ++ result.show());
     ()
-  
-  
 }
 
 pub fun run_problem( filename: string ) : <exn,fsys,console> int {

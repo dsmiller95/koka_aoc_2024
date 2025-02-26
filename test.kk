@@ -2,7 +2,7 @@ import lib/emit
 import lib/assert
 import lib/sort
 import lib/state
-import lib/no-diverge
+import lib/control
 
 pub fun main() {
   println("test assert")
@@ -17,8 +17,8 @@ pub fun main() {
   println("test state")
   state/test();
 
-  println("test no-diverge")
-  no-diverge/test();
+  println("test control")
+  control/test();
 
   println("tests pass!")
 }
