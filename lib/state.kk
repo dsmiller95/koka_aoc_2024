@@ -21,7 +21,7 @@ pub fun int-state(initial: int, action)
     fun set(x) s := x
     return(x) (x, s)
 
-fun test_state_1(){
+fun test_state_1() {
   with int-state(3)
   var x := get();
   set(x + 1);
@@ -30,7 +30,7 @@ fun test_state_1(){
   42
 }
 
-fun test_state_2(){
+fun test_state_2() {
   with returnState(3)
   set(31);
   var y := get();
@@ -38,7 +38,7 @@ fun test_state_2(){
   42
 }
 
-pub fun test(){
+pub fun test() {
   test_state_1().assert-eq((42,4))
   test_state_2().assert-eq(31)
 }
