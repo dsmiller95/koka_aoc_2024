@@ -1,10 +1,15 @@
 module dice-sim
 
+import lib/emit
+import lib/control
+
 import std/num/random
 import std/num/int32
+import std/num/ddouble
 
 effect dice
   fun roll() : int
+  fun max-roll(): int
 
 effect encounter-die
   fun get() : int
@@ -15,6 +20,30 @@ type encounter
   con NothingHappens
   con Loot
 
+fun show(encounter: encounter) {
+  match encounter {
+    Bad -> "Bad"
+    NothingHappens -> "Nothing"
+    Loot -> "Loot"
+  }
+}
+
+fun (==)(encounter: encounter, other: encounter) {
+  match encounter {
+    Bad -> match other {
+      Bad -> True
+      _ -> False
+    }
+    NothingHappens -> match other {
+      NothingHappens -> True
+      _ -> False
+    }
+    Loot -> match other {
+      Loot -> True
+      _ -> False
+    }
+  }
+}
 
 fun roll-encounter(): <dice,encounter-die> (encounter) {
   var encounter-value := get();
@@ -23,11 +52,10 @@ fun roll-encounter(): <dice,encounter-die> (encounter) {
     set(roll-value);
     return Bad;
   }
+  set(min(max-roll(), encounter-value + 1));
   if roll-value == 6 then {
-    set(roll());
     return Loot;
   }
-  set(encounter-value + 1);
   return NothingHappens;
 }
 
@@ -41,27 +69,53 @@ fun encounter-state(initial: int, action){
 fun d6(action) {
   handle(action)
     fun roll() {
-      var smallInt := srandom-int32-range(int32(1), int32(6))
+      var smallInt := srandom-int32-range(int32(1), int32(7))
       int(smallInt)
     }
-    return(x) x
+    fun max-roll() 6
+}
+
+fun count-encounters(action) {
+  var totalBad := 0;
+  var totalNothing := 0;
+  var totalLoot := 0;
+  handle(action)
+    fun emit(encounter) {
+      match encounter {
+        Bad -> totalBad := totalBad + 1;
+        NothingHappens -> totalNothing := totalNothing + 1;
+        Loot -> totalLoot := totalLoot + 1;
+      }
+    }
+    return(x) (totalBad, totalNothing, totalLoot)
 }
 
 fun simulate-encounter() {
-  with d6
-  with encounter-state(roll())
-  var result := roll-encounter();
-  result
+  with count-encounters
+  var iterations := 1;
+  var i := 0;
+  while-no-diverge(iterations) {i < iterations} {
+    simulate-dungeon();
+    i := i + 1;
+  }
 }
 
-
+fun simulate-dungeon() {
+  with d6
+  with encounter-state(roll())
+  
+  var room_count := 10000000;
+  var room := 0;
+  while-no-diverge(room_count) {room < room_count} {
+    emit(roll-encounter());
+    room := room + 1;
+  }
+}
 
 pub fun main()
   println( "hello world" )
   var result := simulate-encounter();
-  var printRes := match result {
-    Bad -> "Bad"
-    NothingHappens -> "Nothing"
-    Loot -> "Loot"
-  };
-  println(printRes)
+  var total := ddouble(result.fst + result.snd + result.thd);
+  println("Bad: " ++ (ddouble/(/)(ddouble(result.fst), total) * ddouble(6)).show());
+  println("Nothing: " ++ (ddouble/(/)(ddouble(result.snd), total) * ddouble(6)).show());
+  println("Loot: " ++ (ddouble/(/)(ddouble(result.thd), total) * ddouble(6)).show());
